@@ -53,11 +53,11 @@ class AdversarialVAE(nn.Module):
         # of all the sentences of that particular label/style.
         # 0 -> negative, 1 -> positive
         self.avg_style_emb = {
-            0: torch.zeros(mconfig.style_hidden_dim),
-            1: torch.zeros(mconfig.style_hidden_dim)
+            0: torch.zeros(mconfig.style_hidden_dim, device=torch.device("cuda")),
+            1: torch.zeros(mconfig.style_hidden_dim, device=torch.device("cuda"))
         }
-        self.avg_style_emb[0].to(device="cuda")
-        self.avg_style_emb[1].to(device="cuda")
+        # self.avg_style_emb[0].to(device="cuda")
+        # self.avg_style_emb[1].to(device="cuda")
         # Used to maintain a running average
         self.num_neg_styles = 0
         self.num_pos_styles = 0
