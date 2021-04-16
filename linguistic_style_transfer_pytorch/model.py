@@ -514,21 +514,27 @@ class AdversarialVAE(nn.Module):
         # full advantage
 
         embedded_seq = self.embedding(sequence.unsqueeze(0))
-        output, final_hidden_state = self.encoder(embedded_seq)
+        output2, final_hidden_state = self.encoder(embedded_seq)
 
+        # print(output.shape)
+        # exit()
         # get content embeddings
         # Note that we need not calculate style embeddings since we
         # use the target style embedding
-        content_emb_mu, content_emb_log_var = self.get_content_emb(
-            final_hidden_state)
+        # output2, _ = pad_packed_sequence(output, batch_first=True)
+        sentence_emb = output2[torch.arange(output2.size(0)), output2.shape[1]-1]
+        content_emb_mu, content_emb_log_var = self.get_content_emb(sentence_emb)
         # sample content embeddings latent space
-        sampled_content_emb = self.sample_prior(
-            content_emb_mu, content_emb_log_var)
+        sampled_content_emb = self.sample_prior(content_emb_mu, content_emb_log_var)
+        sampled_content_emb.to("cuda")
         # Get the approximate estimate of the target style embedding
-        target_style_emb = self.avg_style_emb[style]
+        target_style_emb = self.avg_style_emb[1]
         # Generative embedding
-        generative_emb = torch.cat(
-            (target_style_emb, sampled_content_emb), axis=1)
+        target_style_emb = torch.unsqueeze(target_style_emb, 0).to("cuda")
+        print(target_style_emb.device)
+        print(sampled_content_emb.device)
+        # exit()
+        generative_emb = torch.cat((target_style_emb, sampled_content_emb), axis=1)
         # Generate the style transfered sentences
         transfered_sentence = self.generate_sentences(
             input_sentencs=None, latent_emb=generative_emb, inference=True)
