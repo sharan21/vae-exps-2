@@ -56,6 +56,8 @@ class AdversarialVAE(nn.Module):
             0: torch.zeros(mconfig.style_hidden_dim),
             1: torch.zeros(mconfig.style_hidden_dim)
         }
+        self.avg_style_emb[0].to(device="cuda")
+        self.avg_style_emb[1].to(device="cuda")
         # Used to maintain a running average
         self.num_neg_styles = 0
         self.num_pos_styles = 0
@@ -96,6 +98,9 @@ class AdversarialVAE(nn.Module):
         # sample content and style embeddings from their respective latent spaces
         sampled_content_emb = self.sample_prior(content_emb_mu, content_emb_log_var)
         sampled_style_emb = self.sample_prior(style_emb_mu, style_emb_log_var)
+
+        sampled_style_emb.to(device="cuda")
+        style_labels.to(device="cuda")
         
         # Generative embedding
         generative_emb = torch.cat((sampled_style_emb, sampled_content_emb), dim=1)
@@ -104,7 +109,8 @@ class AdversarialVAE(nn.Module):
         # This will be used in transfering the style of a sentence
         # during inference
         if last_epoch:
-            self.update_average_style_emb(sampled_style_emb, style_labels)
+            pass
+            # self.update_average_style_emb(sampled_style_emb, style_labels)
 
         #=========== Losses on content space =============#
 
@@ -128,8 +134,7 @@ class AdversarialVAE(nn.Module):
         style_entropy_loss = self.get_entropy_loss(style_disc_preds)
 
         # Multitask loss
-        style_mul_loss = self.get_style_mul_loss(
-            sampled_style_emb, style_labels)
+        style_mul_loss = self.get_style_mul_loss(sampled_style_emb, style_labels)
 
         #============== KL losses ===========#
 
@@ -192,6 +197,8 @@ class AdversarialVAE(nn.Module):
             # sample content and style embeddings from their respective latent spaces
             sampled_content_emb = self.sample_prior(
                 content_emb_mu, content_emb_log_var)
+
+            sampled_content_emb.to(device="cuda")
             sampled_style_emb = self.sample_prior(
                 style_emb_mu, style_emb_log_var)
 
@@ -253,7 +260,11 @@ class AdversarialVAE(nn.Module):
             style_emb: batch of sampled style embeddings of the input sentences,shape = (batch_size,mconfig.style_hidden_dim)
             style_labels: style labels of the corresponding input sentences,shape = (batch_size,2)
         """
-        neg_style_label = torch.LongTensor([0, 1], device=style_emb.device)
+        neg_style_label = torch.cuda.LongTensor([0, 1])
+        
+        self.avg_style_emb[0].to(device="cuda")
+        self.avg_style_emb[1].to(device="cuda")
+        # self.num_pos_styles.to(device="cuda")
         # Iterate over the style labels
         for idx, label in enumerate(style_labels):
             # Calculate average for negative style
@@ -267,6 +278,9 @@ class AdversarialVAE(nn.Module):
                 # Increment the counter for positive styles
                 self.num_pos_styles = self.num_pos_styles + 1
                 # Calculate a running average of the positive style embedding
+                print(self.avg_style_emb[1].device)
+                # print(self.num_pos_styles.device)
+
                 self.avg_style_emb[1] = (
                     (self.num_pos_styles-1) * self.avg_style_emb[1] + style_emb[idx])/self.num_pos_styles
 

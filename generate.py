@@ -12,7 +12,7 @@ gconfig = GeneralConfig()
 # load word embeddings
 weights = torch.FloatTensor(np.load(gconfig.word_embedding_path))
 # load checkpoint
-model_checkpoint = torch.load('checkpoints/model_epoch_20.pt')
+model_checkpoint = torch.load('checkpoints/model_epoch_2.pt')
 # Load model
 model = AdversarialVAE(weights=weights)
 model.load_state_dict(model_checkpoint)

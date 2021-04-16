@@ -77,6 +77,10 @@ if __name__ == "__main__":
             vae_and_cls_loss.backward()
             vae_and_cls_opt.step()
             vae_and_cls_opt.zero_grad()
+        
+        print("vae and cls loss: {}".format(vae_and_cls_loss))
+        print("content disc loss: {}".format(content_disc_loss))
+        print("style disc loss: {}".format(style_disc_loss))
 
         
         #================ Saving states ==========================#
