@@ -473,10 +473,10 @@ class AdversarialVAE(nn.Module):
             # Store output sentences
             output_sentence = torch.zeros(
                 mconfig.max_seq_len, 1, device=latent_emb.device)
-            with torch.no_grad:
+            with torch.no_grad():
                 # Greedily generate new words at a time
                 for idx in range(mconfig.max_seq_len):
-                    hidden_state = self.decoder(word_emb, hidden_state)
+                    hidden_states = self.decoder(word_emb, hidden_states)
                     next_word_probs = nn.Softmax(dim=1)(
                         self.projector(hidden_state))
                     next_word = next_word_probs.argmax(1)
@@ -530,13 +530,13 @@ class AdversarialVAE(nn.Module):
         # Get the approximate estimate of the target style embedding
         target_style_emb = self.avg_style_emb[1]
         # Generative embedding
-        target_style_emb = torch.unsqueeze(target_style_emb, 0).to("cuda")
+        target_style_emb = torch.unsqueeze(target_style_emb, 0).to("cpu")
         print(target_style_emb.device)
         print(sampled_content_emb.device)
         # exit()
         generative_emb = torch.cat((target_style_emb, sampled_content_emb), axis=1)
         # Generate the style transfered sentences
         transfered_sentence = self.generate_sentences(
-            input_sentencs=None, latent_emb=generative_emb, inference=True)
+            input_sentences=None, latent_emb=generative_emb, inference=True)
 
         return transfered_sentence.view(-1)
